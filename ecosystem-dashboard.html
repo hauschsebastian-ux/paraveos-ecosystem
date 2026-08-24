@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paraveos — Community App Ökosystem</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0E7C86;
+            --primary-light: #15A0AC;
+            --accent: #FF7A45;
+            --text-primary: #0B2540;
+            --text-secondary: #6B7280;
+            --border: #E5E7EB;
+            --surface: #FFFFFF;
+            --surface-alt: #F9FAFB;
+            --success: #10B981;
+            --danger: #EF4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--surface);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .content {
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.1);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: var(--surface-alt);
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .checkbox-item label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        .error {
+            color: var(--danger);
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+
+        .error-message {
+            display: none;
+            color: var(--danger);
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+
+        button {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #0A5A63;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(14, 124, 134, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #E56A2F;
+        }
+
+        .result {
+            display: none;
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .result h3 {
+            color: var(--primary-light);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .result-item {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--surface-alt);
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+        }
+
+        .result-item strong {
+            color: var(--primary);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .app-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s;
+        }
+
+        .app-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .app-card h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .app-card .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .app-card .badge.type-lifestyle {
+            background: #10B981;
+        }
+
+        .app-card .badge.type-utility {
+            background: #3B82F6;
+        }
+
+        .app-card .badge.type-discovery {
+            background: #F59E0B;
+        }
+
+        .app-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: white;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            background: var(--success);
+            color: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .tabs {
+                gap: 0.5rem;
+            }
+
+            .tab-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .result {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏗️ Community App Ökosystem</h1>
+            <p>Schnell und strukturiert neue Apps entwickeln</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('questionnaire')">Fragebogen</button>
+            <button class="tab-btn" onclick="switchTab('dashboard')">Dashboard</button>
+        </div>
+
+        <!-- Fragebogen Tab -->
+        <div id="questionnaire" class="content active">
+            <div style="background: var(--surface); border-radius: 12px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Deine App definieren</h2>
+
+                <form id="appForm" onsubmit="submitForm(event)">
+                    <!-- 1. App-Type -->
+                    <div class="form-group">
+                        <label>1. App-Typ *</label>
+                        <p class="form-description">Welcher Kategorie gehört deine App an?</p>
+                        <select id="appType" required>
+                            <option value="">-- Bitte wählen --</option>
+                            <option value="lifestyle">Lifestyle (Social, Discovery, UGC)</option>
+                            <option value="utility">Utility (Business-Tools, Produktivität)</option>
+                            <option value="discovery">Discovery (Maps, Ratings, Recommendations)</option>
+                        </select>
+                        <div class="error-message" id="appType-error"></div>
+                    </div>
+
+                    <!-- 2. App-Name -->
+                    <div class="form-group">
+                        <label>2. App-Name *</label>
+                        <input type="text" id="appName" placeholder="z.B. GymBuddy, Wanderlog, TaskHub" required>
+                        <div class="error-message" id="appName-error"></div>
+                    </div>
+
+                    <!-- 3. Core USP -->
+                    <div class="form-group">
+                        <label>3. Core Problem & Lösung (USP) *</label>
+                        <textarea id="coreUSP" placeholder="z.B. 'Fitness-Fans trainieren alleine → wir verbinden sie, damit sie sich gegenseitig pushen'" required></textarea>
+                        <div class="error-message" id="coreUSP-error"></div>
+                    </div>
+
+                    <!-- 4. Zielgruppe -->
+                    <div class="form-group">
+                        <label>4. Zielgruppe *</label>
+                        <input type="text" id="targetAudience" placeholder="z.B. Gym-Members (18-50), Solo Female Travelers" required>
+                        <div class="error-message" id="targetAudience-error"></div>
+                    </div>
+
+                    <!-- 5. Features -->
+                    <div class="form-group">
+                        <label>5. Primäre Features (Mind. 1) *</label>
+                        <p class="form-description">Wähle die 3-5 wichtigsten Features</p>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Discovery" id="f1">
+                                <label for="f1">Discovery/Maps (Spots, Routes, Locations)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Social Feed" id="f2">
+                                <label for="f2">Social Feed (Posts, Stories, UGC)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Buddy Finder" id="f3">
+                                <label for="f3">Buddy Finder / Matching</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Chat" id="f4">
+                                <label for="f4">Chat / Messaging</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Events" id="f5">
+                                <label for="f5">Events / Meetups</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Ratings" id="f6">
+                                <label for="f6">Ratings / Reviews</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Video" id="f7">
+                                <label for="f7">Video Upload / Form-Checking</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Analytics" id="f8">
+                                <label for="f8">Data / Analytics</label>
+                            </div>
+                        </div>
+                        <div class="error-message" id="features-error"></div>
+                    </div>
+
+                    <!-- 6. Budget -->
+                    <div class="form-group">
+                        <label>6. Budget (Entwicklung + Launch) *</label>
+                        <select id="budget" required>
+                            <option value="">-- Bitte wählen --</option>
+                            <option value="<20k">< €20.000</option>
+                            <option value="20-50k">€20.000 - €50.000</option>
+                            <option value="50-100k">€50.000 - €100.000</option>
+                            <option value=">100k">> €100.000</option>
+                            <option value="flexible">Flexibel (abhängig von Plan)</option>
+                        </select>
+                        <div class="error-message" id="budget-error"></div>
+                    </div>
+
+                    <!-- 7. Timeline -->
+                    <div class="form-group">
+                        <label>7. Gewünschter Launch-Zeitraum *</label>
+                        <select id="timeline" required>
+                            <option value="">-- Bitte wählen --</option>
+                            <option value="asap">ASAP (< 2 Monate)</option>
+                            <option value="2-3m">2-3 Monate</option>
+                            <option value="3-6m">3-6 Monate (Standard MVP)</option>
+                            <option value="6m+">6+ Monate (Gründlichkeit)</option>
+                        </select>
+                        <div class="error-message" id="timeline-error"></div>
+                    </div>
+
+                    <!-- 8. Team -->
+                    <div class="form-group">
+                        <label>8. Team-Größe (Development) *</label>
+                        <select id="teamSize" required>
+                            <option value="">-- Bitte wählen --</option>
+                            <option value="1">1 Developer (Solo)</option>
+                            <option value="2-3">2-3 Developer</option>
+                            <option value="4-5">4-5 Developer</option>
+                            <option value="5+">5+ Developer (Team)</option>
+                        </select>
+                        <div class="error-message" id="teamSize-error"></div>
+                    </div>
+
+                    <!-- 9. Tech Requirements -->
+                    <div class="form-group">
+                        <label>9. Besondere Tech-Anforderungen (Optional)</label>
+                        <p class="form-description">Falls abweichend vom Standard-Stack</p>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="techReq" value="Heavy Video" id="t1">
+                                <label for="t1">Heavy Video Processing (AWS S3, Transcoding)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="techReq" value="Real-time" id="t2">
+                                <label for="t2">Real-time Features (WebSocket)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="techReq" value="Offline" id="t3">
+                                <label for="t3">Offline-first (Local Sync)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="techReq" value="APIs" id="t4">
+                                <label for="t4">Viele 3rd-Party Integrationen</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="techReq" value="Enterprise" id="t5">
+                                <label for="t5">Enterprise Security / SSO</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 10. Additional -->
+                    <div class="form-group">
+                        <label>10. Sonstige Anforderungen oder Kontext (Optional)</label>
+                        <textarea id="additional" placeholder="z.B. 'Priorität: schneller Launch', 'Europäischer Fokus'"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary">📝 Fragebogen absenden & zur Dashboard hinzufügen</button>
+                </form>
+
+                <div id="successMessage" class="success-message" style="display: none;">
+                    ✅ App erfolgreich hinzugefügt! Fragebogen wird zurückgesetzt...
+                </div>
+
+                <div id="resultDiv" class="result"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="content">
+            <div style="background: var(--surface); border-radius: 12px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Apps im Ökosystem</h2>
+                <div id="dashboardContent" class="dashboard">
+                    <div class="empty-state">
+                        <h3>Noch keine Apps</h3>
+                        <p>Gehe zum Fragebogen und füge eine neue App hinzu!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 Paraveos — Community App Ökosystem v2.0</p>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'paraveos_apps';
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab).classList.add('active');
+            
+            if (tab === 'dashboard') {
+                renderDashboard();
+            }
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            
+            const appType = document.getElementById('appType').value;
+            const appName = document.getElementById('appName').value;
+            const coreUSP = document.getElementById('coreUSP').value;
+            const targetAudience = document.getElementById('targetAudience').value;
+            const budget = document.getElementById('budget').value;
+            const timeline = document.getElementById('timeline').value;
+            const teamSize = document.getElementById('teamSize').value;
+            const features = Array.from(document.querySelectorAll('input[name="feature"]:checked')).map(el => el.value);
+            const techReqs = Array.from(document.querySelectorAll('input[name="techReq"]:checked')).map(el => el.value);
+            const additional = document.getElementById('additional').value;
+
+            let hasErrors = false;
+            const errors = {};
+
+            if (!appType) { errors.appType = 'App-Typ erforderlich'; hasErrors = true; }
+            if (!appName) { errors.appName = 'App-Name erforderlich'; hasErrors = true; }
+            if (!coreUSP) { errors.coreUSP = 'USP erforderlich'; hasErrors = true; }
+            if (!targetAudience) { errors.targetAudience = 'Zielgruppe erforderlich'; hasErrors = true; }
+            if (features.length === 0) { errors.features = 'Mind. 1 Feature auswählen'; hasErrors = true; }
+            if (!budget) { errors.budget = 'Budget erforderlich'; hasErrors = true; }
+            if (!timeline) { errors.timeline = 'Timeline erforderlich'; hasErrors = true; }
+            if (!teamSize) { errors.teamSize = 'Team-Größe erforderlich'; hasErrors = true; }
+
+            Object.keys(errors).forEach(key => {
+                const errorEl = document.getElementById(key + '-error');
+                if (errorEl) {
+                    errorEl.textContent = errors[key];
+                    errorEl.style.display = 'block';
+                }
+            });
+
+            if (hasErrors) return;
+
+            const app = {
+                id: Date.now(),
+                appType,
+                appName,
+                coreUSP,
+                targetAudience,
+                budget,
+                timeline,
+                teamSize,
+                features,
+                techReqs,
+                additional,
+                createdAt: new Date().toLocaleString('de-DE')
+            };
+
+            let apps = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            apps.push(app);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
+
+            showSuccessMessage();
+            setTimeout(resetForm, 2000);
+        }
+
+        function showSuccessMessage() {
+            const msg = document.getElementById('successMessage');
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 3000);
+        }
+
+        function resetForm() {
+            document.getElementById('appForm').reset();
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+        }
+
+        function renderDashboard() {
+            const apps = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const container = document.getElementById('dashboardContent');
+
+            if (apps.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><h3>Noch keine Apps</h3><p>Gehe zum Fragebogen und füge eine neue App hinzu!</p></div>';
+                return;
+            }
+
+            container.innerHTML = apps.map(app => `
+                <div class="app-card">
+                    <h3>${app.appName}</h3>
+                    <div>
+                        <span class="badge type-${app.appType}">${app.appType.charAt(0).toUpperCase() + app.appType.slice(1)}</span>
+                        <span class="badge">${app.timeline}</span>
+                    </div>
+                    <p><strong>USP:</strong> ${app.coreUSP}</p>
+                    <p><strong>Zielgruppe:</strong> ${app.targetAudience}</p>
+                    <p><strong>Features:</strong> ${app.features.join(', ')}</p>
+                    <p><strong>Budget:</strong> ${app.budget}</p>
+                    <p><strong>Team:</strong> ${app.teamSize}</p>
+                    ${app.techReqs.length > 0 ? `<p><strong>Tech:</strong> ${app.techReqs.join(', ')}</p>` : ''}
+                    <p style="font-size: 0.85rem; color: #999; margin-top: 1rem;">Erstellt: ${app.createdAt}</p>
+                </div>
+            `).join('');
+        }
+
+        // Load saved apps on page load
+        window.addEventListener('load', () => {
+            renderDashboard();
+        });
+    </script>
+</body>
+</html>
