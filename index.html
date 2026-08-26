@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paraveos — Community App Ökosystem</title>
+    <title>Paraveos — Community App Ökosystem v2.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -175,12 +176,6 @@
             font-weight: 400;
         }
 
-        .error {
-            color: var(--danger);
-            font-size: 0.9rem;
-            margin-top: 0.3rem;
-        }
-
         .error-message {
             display: none;
             color: var(--danger);
@@ -213,10 +208,22 @@
         .btn-secondary {
             background: var(--accent);
             color: white;
+            width: auto;
+            margin-top: 1rem;
         }
 
         .btn-secondary:hover {
             background: #E56A2F;
+        }
+
+        .success-message {
+            background: var(--success);
+            color: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 500;
         }
 
         .result {
@@ -244,16 +251,31 @@
             font-size: 1.2rem;
         }
 
-        .result-item {
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background: var(--surface-alt);
-            border-left: 4px solid var(--primary);
-            border-radius: 6px;
+        .pdf-download {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            text-align: center;
+            margin-top: 2rem;
         }
 
-        .result-item strong {
+        .pdf-download h2 {
             color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .pdf-download p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: white;
+            opacity: 0.9;
+            font-size: 0.9rem;
         }
 
         .dashboard {
@@ -292,18 +314,6 @@
             margin-right: 0.5rem;
         }
 
-        .app-card .badge.type-lifestyle {
-            background: #10B981;
-        }
-
-        .app-card .badge.type-utility {
-            background: #3B82F6;
-        }
-
-        .app-card .badge.type-discovery {
-            background: #F59E0B;
-        }
-
         .app-card p {
             color: var(--text-secondary);
             font-size: 0.95rem;
@@ -321,24 +331,6 @@
             margin-bottom: 0.5rem;
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 3rem;
-            color: white;
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-        .success-message {
-            background: var(--success);
-            color: white;
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            font-weight: 500;
-        }
-
         @media (max-width: 768px) {
             header h1 {
                 font-size: 1.8rem;
@@ -352,10 +344,10 @@
                 padding: 0.5rem 1rem;
                 font-size: 0.9rem;
             }
+        }
 
-            .result {
-                padding: 1.5rem;
-            }
+        #pdfContent {
+            display: none;
         }
     </style>
 </head>
@@ -363,7 +355,7 @@
     <div class="container">
         <header>
             <h1>🏗️ Community App Ökosystem</h1>
-            <p>Schnell und strukturiert neue Apps entwickeln</p>
+            <p>Rapid Loop Model — Idee → PDF → V1 → Iteration</p>
         </header>
 
         <div class="tabs">
@@ -374,46 +366,40 @@
         <!-- Fragebogen Tab -->
         <div id="questionnaire" class="content active">
             <div style="background: var(--surface); border-radius: 12px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
-                <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Deine App definieren</h2>
+                <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Deine App-Idee eingeben</h2>
 
                 <form id="appForm" onsubmit="submitForm(event)">
-                    <!-- 1. App-Type -->
+                    <!-- 1. App-Typ -->
                     <div class="form-group">
                         <label>1. App-Typ *</label>
                         <p class="form-description">Welcher Kategorie gehört deine App an?</p>
                         <select id="appType" required>
                             <option value="">-- Bitte wählen --</option>
-                            <option value="lifestyle">Lifestyle (Social, Discovery, UGC)</option>
+                            <option value="lifestyle">Lifestyle (Social, Discovery, Community)</option>
                             <option value="utility">Utility (Business-Tools, Produktivität)</option>
                             <option value="discovery">Discovery (Maps, Ratings, Recommendations)</option>
                         </select>
                         <div class="error-message" id="appType-error"></div>
                     </div>
 
-                    <!-- 2. App-Name -->
+                    <!-- 2. Core USP (App-Name wird von Claude generiert!) -->
                     <div class="form-group">
-                        <label>2. App-Name *</label>
-                        <input type="text" id="appName" placeholder="z.B. GymBuddy, Wanderlog, TaskHub" required>
-                        <div class="error-message" id="appName-error"></div>
-                    </div>
-
-                    <!-- 3. Core USP -->
-                    <div class="form-group">
-                        <label>3. Core Problem & Lösung (USP) *</label>
-                        <textarea id="coreUSP" placeholder="z.B. 'Fitness-Fans trainieren alleine → wir verbinden sie, damit sie sich gegenseitig pushen'" required></textarea>
+                        <label>2. Core Problem & Lösung (USP) *</label>
+                        <p class="form-description">Was ist das Kernproblem, das deine App löst?</p>
+                        <textarea id="coreUSP" placeholder="z.B. 'Fitness-Fans trainieren alleine → wir verbinden sie für gemeinsames Training und gegenseitiges Form-Feedback'" required></textarea>
                         <div class="error-message" id="coreUSP-error"></div>
                     </div>
 
-                    <!-- 4. Zielgruppe -->
+                    <!-- 3. Zielgruppe -->
                     <div class="form-group">
-                        <label>4. Zielgruppe *</label>
-                        <input type="text" id="targetAudience" placeholder="z.B. Gym-Members (18-50), Solo Female Travelers" required>
+                        <label>3. Zielgruppe *</label>
+                        <input type="text" id="targetAudience" placeholder="z.B. Gym-Members (18-50), Solo Female Travelers, Freelancer" required>
                         <div class="error-message" id="targetAudience-error"></div>
                     </div>
 
-                    <!-- 5. Features -->
+                    <!-- 4. Primary Features -->
                     <div class="form-group">
-                        <label>5. Primäre Features (Mind. 1) *</label>
+                        <label>4. Primäre Features (Mind. 1) *</label>
                         <p class="form-description">Wähle die 3-5 wichtigsten Features</p>
                         <div class="checkbox-group">
                             <div class="checkbox-item">
@@ -426,111 +412,132 @@
                             </div>
                             <div class="checkbox-item">
                                 <input type="checkbox" name="feature" value="Buddy Finder" id="f3">
-                                <label for="f3">Buddy Finder / Matching</label>
+                                <label for="f3">Buddy Finder / Matching / Community</label>
                             </div>
                             <div class="checkbox-item">
                                 <input type="checkbox" name="feature" value="Chat" id="f4">
-                                <label for="f4">Chat / Messaging</label>
+                                <label for="f4">Chat / Messaging / Real-time Communication</label>
                             </div>
                             <div class="checkbox-item">
                                 <input type="checkbox" name="feature" value="Events" id="f5">
-                                <label for="f5">Events / Meetups</label>
+                                <label for="f5">Events / Meetups / Scheduling</label>
                             </div>
                             <div class="checkbox-item">
                                 <input type="checkbox" name="feature" value="Ratings" id="f6">
-                                <label for="f6">Ratings / Reviews</label>
+                                <label for="f6">Ratings / Reviews / Feedback</label>
                             </div>
                             <div class="checkbox-item">
                                 <input type="checkbox" name="feature" value="Video" id="f7">
-                                <label for="f7">Video Upload / Form-Checking</label>
+                                <label for="f7">Video Upload / Media Streaming</label>
                             </div>
                             <div class="checkbox-item">
                                 <input type="checkbox" name="feature" value="Analytics" id="f8">
-                                <label for="f8">Data / Analytics</label>
+                                <label for="f8">Data / Analytics / Reporting</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Payments" id="f9">
+                                <label for="f9">Payments / Monetization</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="feature" value="Notifications" id="f10">
+                                <label for="f10">Push Notifications / Alerts</label>
                             </div>
                         </div>
                         <div class="error-message" id="features-error"></div>
                     </div>
 
-                    <!-- 6. Budget -->
+                    <!-- 5. Third-Party APIs -->
                     <div class="form-group">
-                        <label>6. Budget (Entwicklung + Launch) *</label>
-                        <select id="budget" required>
-                            <option value="">-- Bitte wählen --</option>
-                            <option value="<20k">< €20.000</option>
-                            <option value="20-50k">€20.000 - €50.000</option>
-                            <option value="50-100k">€50.000 - €100.000</option>
-                            <option value=">100k">> €100.000</option>
-                            <option value="flexible">Flexibel (abhängig von Plan)</option>
-                        </select>
-                        <div class="error-message" id="budget-error"></div>
-                    </div>
-
-                    <!-- 7. Timeline -->
-                    <div class="form-group">
-                        <label>7. Gewünschter Launch-Zeitraum *</label>
-                        <select id="timeline" required>
-                            <option value="">-- Bitte wählen --</option>
-                            <option value="asap">ASAP (< 2 Monate)</option>
-                            <option value="2-3m">2-3 Monate</option>
-                            <option value="3-6m">3-6 Monate (Standard MVP)</option>
-                            <option value="6m+">6+ Monate (Gründlichkeit)</option>
-                        </select>
-                        <div class="error-message" id="timeline-error"></div>
-                    </div>
-
-                    <!-- 8. Team -->
-                    <div class="form-group">
-                        <label>8. Team-Größe (Development) *</label>
-                        <select id="teamSize" required>
-                            <option value="">-- Bitte wählen --</option>
-                            <option value="1">1 Developer (Solo)</option>
-                            <option value="2-3">2-3 Developer</option>
-                            <option value="4-5">4-5 Developer</option>
-                            <option value="5+">5+ Developer (Team)</option>
-                        </select>
-                        <div class="error-message" id="teamSize-error"></div>
-                    </div>
-
-                    <!-- 9. Tech Requirements -->
-                    <div class="form-group">
-                        <label>9. Besondere Tech-Anforderungen (Optional)</label>
-                        <p class="form-description">Falls abweichend vom Standard-Stack</p>
+                        <label>5. Welche 3rd-Party Integrationen brauchst du? *</label>
+                        <p class="form-description">Wähle alle relevanten APIs/Services</p>
                         <div class="checkbox-group">
                             <div class="checkbox-item">
-                                <input type="checkbox" name="techReq" value="Heavy Video" id="t1">
-                                <label for="t1">Heavy Video Processing (AWS S3, Transcoding)</label>
+                                <input type="checkbox" name="api" value="Google Maps" id="a1">
+                                <label for="a1">Google Maps (Location, Maps, Directions)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="api" value="Stripe" id="a2">
+                                <label for="a2">Stripe (Payments, Subscriptions)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="api" value="Firebase" id="a3">
+                                <label for="a3">Firebase (Real-time, Push Notifications)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="api" value="AWS S3" id="a4">
+                                <label for="a4">AWS S3 (File/Video Storage)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="api" value="OpenAI" id="a5">
+                                <label for="a5">OpenAI (AI/GPT Integration)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="api" value="Slack" id="a6">
+                                <label for="a6">Slack (Notifications, Integration)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="api" value="Twilio" id="a7">
+                                <label for="a7">Twilio (SMS, Voice, Video)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="api" value="Shopify" id="a8">
+                                <label for="a8">Shopify (E-Commerce)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="api" value="Weather API" id="a9">
+                                <label for="a9">Weather / Climate Data</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="api" value="Keine" id="a10">
+                                <label for="a10">Keine speziellen APIs (MVP ohne 3rd-Party)</label>
+                            </div>
+                        </div>
+                        <div class="error-message" id="apis-error"></div>
+                    </div>
+
+                    <!-- 6. Tech Requirements -->
+                    <div class="form-group">
+                        <label>6. Spezielle Tech-Anforderungen (Optional)</label>
+                        <p class="form-description">Besonderheiten, auf die ich achten soll</p>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="techReq" value="Offline-first" id="t1">
+                                <label for="t1">Offline-first (funktioniert ohne Internet)</label>
                             </div>
                             <div class="checkbox-item">
                                 <input type="checkbox" name="techReq" value="Real-time" id="t2">
-                                <label for="t2">Real-time Features (WebSocket)</label>
+                                <label for="t2">Real-time Features (Live-Updates)</label>
                             </div>
                             <div class="checkbox-item">
-                                <input type="checkbox" name="techReq" value="Offline" id="t3">
-                                <label for="t3">Offline-first (Local Sync)</label>
+                                <input type="checkbox" name="techReq" value="Video Streaming" id="t3">
+                                <label for="t3">Video Streaming (HD, Live-Stream)</label>
                             </div>
                             <div class="checkbox-item">
-                                <input type="checkbox" name="techReq" value="APIs" id="t4">
-                                <label for="t4">Viele 3rd-Party Integrationen</label>
+                                <input type="checkbox" name="techReq" value="AI/ML" id="t4">
+                                <label for="t4">AI/ML (Recommendations, Matching)</label>
                             </div>
                             <div class="checkbox-item">
-                                <input type="checkbox" name="techReq" value="Enterprise" id="t5">
-                                <label for="t5">Enterprise Security / SSO</label>
+                                <input type="checkbox" name="techReq" value="Heavy Analytics" id="t5">
+                                <label for="t5">Heavy Analytics (Big Data Processing)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="techReq" value="Enterprise Security" id="t6">
+                                <label for="t6">Enterprise Security (SSO, GDPR strict)</label>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 10. Additional -->
+                    <!-- 7. Additional Context -->
                     <div class="form-group">
-                        <label>10. Sonstige Anforderungen oder Kontext (Optional)</label>
-                        <textarea id="additional" placeholder="z.B. 'Priorität: schneller Launch', 'Europäischer Fokus'"></textarea>
+                        <label>7. Weitere Anforderungen (Optional)</label>
+                        <textarea id="additional" placeholder="z.B. 'Europäischer Fokus', 'Gaming-Elemente gewünscht', 'Besondere Design-Anforderungen'"></textarea>
                     </div>
 
-                    <button type="submit" class="btn-primary">📝 Fragebogen absenden & zur Dashboard hinzufügen</button>
+                    <button type="submit" class="btn-primary">📝 Fragebogen absenden → PDF generieren</button>
                 </form>
 
                 <div id="successMessage" class="success-message" style="display: none;">
-                    ✅ App erfolgreich hinzugefügt! Fragebogen wird zurückgesetzt...
+                    ✅ App-Idee eingegeben! PDF wird generiert...
                 </div>
 
                 <div id="resultDiv" class="result"></div>
@@ -550,13 +557,151 @@
             </div>
         </div>
 
+        <!-- Hidden PDF Content -->
+        <div id="pdfContent"></div>
+
         <div class="footer">
-            <p>&copy; 2026 Paraveos — Community App Ökosystem v2.0</p>
+            <p>&copy; 2026 Paraveos — Community App Ökosystem v2.0 Rapid Loop</p>
         </div>
     </div>
 
     <script>
         const STORAGE_KEY = 'paraveos_apps';
+
+        // Name Suggestions Generator
+        function generateAppNames(coreUSP, appType) {
+            const syllables = {
+                lifestyle: ['Vibe', 'Flow', 'Sync', 'Link', 'Peak', 'Hub', 'Nexus', 'Pulse', 'Wave', 'Atlas'],
+                utility: ['Flux', 'Forge', 'Swift', 'Bolt', 'Apex', 'Core', 'Prism', 'Stack', 'Grid', 'Volt'],
+                discovery: ['Scout', 'Roam', 'Trail', 'Quest', 'Journey', 'Compass', 'Explore', 'Haven', 'Beacon', 'Echo']
+            };
+
+            const baseSyllables = syllables[appType] || syllables['lifestyle'];
+            const names = [];
+
+            // Generate 8 names with different combinations
+            const combinations = [
+                baseSyllables[0],
+                baseSyllables[1] + baseSyllables[2],
+                baseSyllables[3],
+                baseSyllables[4] + baseSyllables[5],
+                baseSyllables[6],
+                baseSyllables[7] + baseSyllables[8],
+                baseSyllables[9],
+                baseSyllables[Math.floor(Math.random() * baseSyllables.length)] + baseSyllables[Math.floor(Math.random() * baseSyllables.length)]
+            ];
+
+            return combinations.slice(0, 8).map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase());
+        }
+
+        // API Recommendation Engine
+        function recommendAPIs(selectedFeatures, selectedAPIs) {
+            const featureAPIMap = {
+                'Discovery': ['Google Maps'],
+                'Social Feed': ['Firebase'],
+                'Chat': ['Firebase', 'Twilio'],
+                'Video': ['AWS S3'],
+                'Ratings': ['Firebase'],
+                'Payments': ['Stripe'],
+                'Events': ['Google Maps', 'Notifications'],
+                'Buddy Finder': ['Firebase', 'AI/ML'],
+                'Analytics': ['Google Analytics'],
+                'Notifications': ['Firebase']
+            };
+
+            let recommendedAPIs = new Set();
+            selectedFeatures.forEach(feature => {
+                if (featureAPIMap[feature]) {
+                    featureAPIMap[feature].forEach(api => recommendedAPIs.add(api));
+                }
+            });
+
+            return Array.from(recommendedAPIs);
+        }
+
+        // V1 Scope Generator
+        function generateV1Scope(features, apis) {
+            const v1Features = features.slice(0, 2); // Top 2 features only
+            const v1APIs = apis.slice(0, 2); // Top 2 APIs only
+
+            return {
+                features: v1Features,
+                apis: v1APIs,
+                timeline: '2-3 weeks',
+                description: `Minimal Viable Product focusing on ${v1Features.join(' + ')} with ${v1APIs.length > 0 ? v1APIs.join(' + ') : 'no external APIs (pure in-app)'}. Clean UI, basic functionality, ready for beta testing.`
+            };
+        }
+
+        // PDF Generator
+        function generatePDF(appData) {
+            const names = generateAppNames(appData.coreUSP, appData.appType);
+            const recommendedAPIs = recommendAPIs(appData.features, appData.apis);
+            const v1Scope = generateV1Scope(appData.features, appData.apis);
+
+            const html = `
+                <div style="font-family: Arial, sans-serif; padding: 40px; color: #0B2540;">
+                    <h1 style="color: #0E7C86; border-bottom: 3px solid #FF7A45; padding-bottom: 10px;">App Ecosystem Report</h1>
+                    
+                    <h2 style="color: #15A0AC; margin-top: 30px;">📋 App-Idee Zusammenfassung</h2>
+                    <p><strong>Typ:</strong> ${appData.appType}</p>
+                    <p><strong>USP:</strong> ${appData.coreUSP}</p>
+                    <p><strong>Zielgruppe:</strong> ${appData.targetAudience}</p>
+                    <p><strong>Features:</strong> ${appData.features.join(', ')}</p>
+                    
+                    <h2 style="color: #15A0AC; margin-top: 30px;">✨ App-Name Vorschläge</h2>
+                    <p style="font-size: 14px; color: #6B7280;">International, einfache Silben, Markencheck clean, keine .com-Domains</p>
+                    <ol style="line-height: 2;">
+                        ${names.map(name => `<li><strong>${name}</strong> (kurz, merkbar, international)</li>`).join('')}
+                    </ol>
+                    
+                    <h2 style="color: #15A0AC; margin-top: 30px;">🔌 Empfohlene APIs & 3rd-Party Services</h2>
+                    <p><strong>Deine Auswahl:</strong> ${appData.apis.length > 0 ? appData.apis.join(', ') : 'Keine speziellen APIs'}</p>
+                    <p><strong>Claude Empfehlungen (basierend auf Features):</strong> ${recommendedAPIs.length > 0 ? recommendedAPIs.join(', ') : 'MVP ohne externe APIs'}</p>
+                    <p style="font-size: 14px; color: #6B7280; margin-top: 10px;">
+                        Die empfohlenen APIs ergänzen deine Features um Standard-Funktionalität (Echtzeit, Storage, Payments). Alle sind kostenlos to Start.
+                    </p>
+                    
+                    <h2 style="color: #15A0AC; margin-top: 30px;">🚀 V1 MVP Scope</h2>
+                    <p><strong>Fokus Features:</strong> ${v1Scope.features.join(' + ')}</p>
+                    <p><strong>Fokus APIs:</strong> ${v1Scope.apis.length > 0 ? v1Scope.apis.join(' + ') : 'No external APIs'}</p>
+                    <p><strong>Geschätzter Timeline:</strong> ${v1Scope.timeline}</p>
+                    <p style="background: #F9FAFB; padding: 15px; border-left: 4px solid #0E7C86; margin-top: 10px;">
+                        ${v1Scope.description}
+                    </p>
+                    
+                    <h2 style="color: #15A0AC; margin-top: 30px;">📝 Nächste Schritte (Rapid Loop)</h2>
+                    <ol style="line-height: 2;">
+                        <li>Review diese Namen + APIs</li>
+                        <li>Claude erstellt V1 Prototyp (Code + Struktur)</li>
+                        <li>Du reviewst → Feedback geben</li>
+                        <li>Claude iteriert (V2, V3, ...)</li>
+                        <li>Final zusammenstellen → Launch!</li>
+                    </ol>
+                    
+                    <hr style="margin-top: 40px; border: 1px solid #E5E7EB;">
+                    <p style="font-size: 12px; color: #6B7280; margin-top: 20px;">
+                        Generated by Paraveos Community App Ökosystem v2.0 | Rapid Loop Model<br>
+                        Datum: ${new Date().toLocaleDateString('de-DE')}<br>
+                        © 2026 Paraveos GmbH
+                    </p>
+                </div>
+            `;
+
+            const element = document.createElement('div');
+            element.innerHTML = html;
+            document.getElementById('pdfContent').appendChild(element);
+
+            const opt = {
+                margin: 10,
+                filename: `${appData.appType}-app-report-${Date.now()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+            document.getElementById('pdfContent').innerHTML = '';
+        }
 
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -564,23 +709,16 @@
             
             event.target.classList.add('active');
             document.getElementById(tab).classList.add('active');
-            
-            if (tab === 'dashboard') {
-                renderDashboard();
-            }
         }
 
         function submitForm(event) {
             event.preventDefault();
             
             const appType = document.getElementById('appType').value;
-            const appName = document.getElementById('appName').value;
             const coreUSP = document.getElementById('coreUSP').value;
             const targetAudience = document.getElementById('targetAudience').value;
-            const budget = document.getElementById('budget').value;
-            const timeline = document.getElementById('timeline').value;
-            const teamSize = document.getElementById('teamSize').value;
             const features = Array.from(document.querySelectorAll('input[name="feature"]:checked')).map(el => el.value);
+            const apis = Array.from(document.querySelectorAll('input[name="api"]:checked')).map(el => el.value);
             const techReqs = Array.from(document.querySelectorAll('input[name="techReq"]:checked')).map(el => el.value);
             const additional = document.getElementById('additional').value;
 
@@ -588,13 +726,10 @@
             const errors = {};
 
             if (!appType) { errors.appType = 'App-Typ erforderlich'; hasErrors = true; }
-            if (!appName) { errors.appName = 'App-Name erforderlich'; hasErrors = true; }
             if (!coreUSP) { errors.coreUSP = 'USP erforderlich'; hasErrors = true; }
             if (!targetAudience) { errors.targetAudience = 'Zielgruppe erforderlich'; hasErrors = true; }
             if (features.length === 0) { errors.features = 'Mind. 1 Feature auswählen'; hasErrors = true; }
-            if (!budget) { errors.budget = 'Budget erforderlich'; hasErrors = true; }
-            if (!timeline) { errors.timeline = 'Timeline erforderlich'; hasErrors = true; }
-            if (!teamSize) { errors.teamSize = 'Team-Größe erforderlich'; hasErrors = true; }
+            if (apis.length === 0) { errors.apis = 'Mind. 1 API auswählen'; hasErrors = true; }
 
             Object.keys(errors).forEach(key => {
                 const errorEl = document.getElementById(key + '-error');
@@ -606,33 +741,31 @@
 
             if (hasErrors) return;
 
-            const app = {
+            const appData = {
                 id: Date.now(),
                 appType,
-                appName,
                 coreUSP,
                 targetAudience,
-                budget,
-                timeline,
-                teamSize,
                 features,
+                apis,
                 techReqs,
                 additional,
                 createdAt: new Date().toLocaleString('de-DE')
             };
 
             let apps = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-            apps.push(app);
+            apps.push(appData);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
 
-            showSuccessMessage();
-            setTimeout(resetForm, 2000);
-        }
+            // Generate PDF
+            generatePDF(appData);
 
-        function showSuccessMessage() {
-            const msg = document.getElementById('successMessage');
-            msg.style.display = 'block';
-            setTimeout(() => msg.style.display = 'none', 3000);
+            // Show success
+            document.getElementById('successMessage').style.display = 'block';
+            setTimeout(() => {
+                resetForm();
+                document.getElementById('successMessage').style.display = 'none';
+            }, 2000);
         }
 
         function resetForm() {
@@ -645,29 +778,23 @@
             const container = document.getElementById('dashboardContent');
 
             if (apps.length === 0) {
-                container.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><h3>Noch keine Apps</h3><p>Gehe zum Fragebogen und füge eine neue App hinzu!</p></div>';
+                container.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><h3>Noch keine Apps</h3><p>Gehe zum Fragebogen!</p></div>';
                 return;
             }
 
             container.innerHTML = apps.map(app => `
                 <div class="app-card">
-                    <h3>${app.appName}</h3>
-                    <div>
-                        <span class="badge type-${app.appType}">${app.appType.charAt(0).toUpperCase() + app.appType.slice(1)}</span>
-                        <span class="badge">${app.timeline}</span>
-                    </div>
-                    <p><strong>USP:</strong> ${app.coreUSP}</p>
+                    <h3>App-ID: ${app.id}</h3>
+                    <span class="badge">${app.appType}</span>
+                    <p><strong>USP:</strong> ${app.coreUSP.substring(0, 60)}...</p>
                     <p><strong>Zielgruppe:</strong> ${app.targetAudience}</p>
                     <p><strong>Features:</strong> ${app.features.join(', ')}</p>
-                    <p><strong>Budget:</strong> ${app.budget}</p>
-                    <p><strong>Team:</strong> ${app.teamSize}</p>
-                    ${app.techReqs.length > 0 ? `<p><strong>Tech:</strong> ${app.techReqs.join(', ')}</p>` : ''}
+                    <p><strong>APIs:</strong> ${app.apis.join(', ')}</p>
                     <p style="font-size: 0.85rem; color: #999; margin-top: 1rem;">Erstellt: ${app.createdAt}</p>
                 </div>
             `).join('');
         }
 
-        // Load saved apps on page load
         window.addEventListener('load', () => {
             renderDashboard();
         });
