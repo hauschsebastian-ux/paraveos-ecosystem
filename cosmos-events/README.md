@@ -59,7 +59,15 @@ docker compose up -d --build
 Caddy holt automatisch ein Let's-Encrypt-Zertifikat, erzwingt HTTPS und leitet an die App weiter.
 Daten liegen im Volume `cosmos-data` (Datenbank, verschlüsselte Uploads, Backups, Schlüssel).
 
-### Variante B: Node direkt hinter nginx/Traefik
+### Variante B: Fly.io über GitHub Actions (ohne eigenen Server)
+
+`fly.toml` und `.github/workflows/deploy-fly.yml` liegen bei. Einmalig ein Fly.io-Konto anlegen, ein Token
+als GitHub-Secret `FLY_API_TOKEN` hinterlegen und den Workflow „Deploy to Fly.io“ starten. Die App läuft
+danach in Frankfurt unter `https://<app-name>.fly.dev` mit persistentem Volume; eine eigene Domain lässt sich
+per `fly certs add dashboard.cosmos-events.de` anbinden. Hinweis: Reine Static-Hoster wie Netlify oder
+GitHub Pages eignen sich nicht, da die App einen dauerhaft laufenden Server mit Datenbank und Dateispeicher braucht.
+
+### Variante C: Node direkt hinter nginx/Traefik
 
 `NODE_ENV=production TRUST_PROXY=1 APP_ORIGIN=https://… npm start` – der Proxy terminiert TLS.
 Alternativ `TLS_CERT_FILE`/`TLS_KEY_FILE` setzen, dann spricht der Node-Server selbst HTTPS.

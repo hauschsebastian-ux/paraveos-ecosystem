@@ -1,0 +1,36 @@
+# Fly.io-Konfiguration – Deployment mit persistentem Volume für Datenbank, Uploads und Backups.
+# App-Name ggf. anpassen (muss weltweit eindeutig sein), Region "fra" = Frankfurt (EU, DSGVO).
+app = "cosmos-events-dashboard"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  TRUST_PROXY = "1"
+  DATA_DIR = "/app/data"
+  PORT = "3000"
+  REQUIRE_2FA_ROLES = "admin,dj"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/api/meta"
+
+[[mounts]]
+  source = "cosmos_data"
+  destination = "/app/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

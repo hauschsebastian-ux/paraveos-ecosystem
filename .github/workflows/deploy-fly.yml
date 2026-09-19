@@ -1,0 +1,57 @@
+# Deployment des Cosmos-Events-Dashboards auf Fly.io (Frankfurt) mit persistentem Volume.
+#
+# Einmalige Einrichtung:
+#   1. Konto bei https://fly.io anlegen (Kreditkarte nötig, Kosten ca. 3–6 € / Monat).
+#   2. Token erzeugen: https://fly.io/user/personal_access_tokens  (oder `fly tokens create deploy`)
+#   3. Im GitHub-Repo unter Settings → Secrets and variables → Actions anlegen:
+#        FLY_API_TOKEN   = das Token
+#        ADMIN_EMAIL     = E-Mail des ersten Admin-Kontos (optional, Standard admin@cosmos-events.de)
+#        SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET (optional)
+#   4. Optional unter Variables: FLY_APP (App-Name, Standard cosmos-events-dashboard)
+#   5. Workflow manuell starten (Actions → "Deploy to Fly.io" → Run workflow) oder auf den Branch pushen.
+#
+# Das Initialpasswort des Admins steht danach einmalig in den Logs: `fly logs -a <app>`
+# bzw. im Fly-Dashboard unter Monitoring.
+name: Deploy to Fly.io
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, claude/cosmos-events-dashboard-dr6bfa]
+    paths: ["cosmos-events/**", ".github/workflows/deploy-fly.yml"]
+concurrency: deploy-fly
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ vars.FLY_DEPLOY_ENABLED != 'false' }}
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_APP: ${{ vars.FLY_APP || 'cosmos-events-dashboard' }}
+    defaults:
+      run:
+        working-directory: cosmos-events
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check token
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "::error::Secret FLY_API_TOKEN fehlt – siehe Kommentar im Workflow."; exit 1; fi
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Create app and volume (first run only)
+        run: |
+          if ! flyctl apps list --json | grep -q "\"Name\": *\"$FLY_APP\""; then
+            flyctl apps create "$FLY_APP" --org personal
+          fi
+          if ! flyctl volumes list -a "$FLY_APP" --json | grep -q '"name": *"cosmos_data"'; then
+            flyctl volumes create cosmos_data -a "$FLY_APP" --region fra --size 1 --yes
+          fi
+      - name: Set secrets
+        run: |
+          ARGS="APP_ORIGIN=https://$FLY_APP.fly.dev"
+          if [ -n "${{ secrets.ADMIN_EMAIL }}" ]; then ARGS="$ARGS ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}"; fi
+          if [ -n "${{ secrets.SPOTIFY_CLIENT_ID }}" ]; then ARGS="$ARGS SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }} SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}"; fi
+          if [ -n "${{ secrets.DATA_ENCRYPTION_KEY }}" ]; then ARGS="$ARGS DATA_ENCRYPTION_KEY=${{ secrets.DATA_ENCRYPTION_KEY }}"; fi
+          flyctl secrets set -a "$FLY_APP" --stage $ARGS
+      - name: Deploy
+        run: flyctl deploy -a "$FLY_APP" --remote-only --ha=false
+      - name: URL
+        run: echo "Dashboard: https://$FLY_APP.fly.dev"
