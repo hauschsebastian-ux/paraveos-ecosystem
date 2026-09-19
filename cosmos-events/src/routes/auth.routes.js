@@ -29,14 +29,14 @@ router.post('/login', loginLimiter, (req, res) => {
 
   if (!user || user.anonymized_at) { verifyPassword(password, DUMMY_HASH); audit(req, 'auth.login_failed', 'user', null, { email }); return generic(); }
   if (user.locked_until && new Date(user.locked_until).getTime() > Date.now()) {
-    audit(req, 'auth.login_locked', 'user', user.id);
+    audit(req, 'auth.login_locked', 'user', user.id, null, user.id);
     return res.status(423).json({ error: `Konto vorübergehend gesperrt. Bitte in ${LOCK_MINUTES} Minuten erneut versuchen.` });
   }
   if (!verifyPassword(password, user.password_hash)) {
     const failed = user.failed_attempts + 1;
     const lock = failed >= MAX_FAILED ? new Date(Date.now() + LOCK_MINUTES * 60000).toISOString() : null;
     db.prepare('UPDATE users SET failed_attempts = ?, locked_until = ? WHERE id = ?').run(lock ? 0 : failed, lock, user.id);
-    audit(req, 'auth.login_failed', 'user', user.id, { locked: !!lock });
+    audit(req, 'auth.login_failed', 'user', user.id, { locked: !!lock }, user.id);
     return generic();
   }
   if (!user.active) return res.status(403).json({ error: 'Dieses Konto ist deaktiviert.' });
@@ -44,7 +44,7 @@ router.post('/login', loginLimiter, (req, res) => {
   db.prepare("UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?").run(user.id);
   const pending = user.totp_enabled === 1;
   createSession(res, req, user, pending);
-  audit(req, pending ? 'auth.password_ok_2fa_pending' : 'auth.login', 'user', user.id);
+  audit(req, pending ? 'auth.password_ok_2fa_pending' : 'auth.login', 'user', user.id, null, user.id);
   if (pending) return res.json({ requires_2fa: true });
   db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(user.id);
   res.json({ ok: true, user: publicUser({ ...user, totp_enabled: false }) });

@@ -37,7 +37,11 @@ router.put('/:eventId', requireEventAccess(), (req, res) => {
   db.prepare(`INSERT INTO questionnaire_responses (event_id, data, current_step, submitted_at, updated_at) VALUES (?,?,?,?,datetime('now'))
     ON CONFLICT(event_id) DO UPDATE SET data = excluded.data, current_step = excluded.current_step, submitted_at = excluded.submitted_at, updated_at = datetime('now')`)
     .run(req.event.id, JSON.stringify(merged), step, submitted);
-  if (req.body?.submit === true) audit(req, 'questionnaire.submitted', 'event', req.event.id);
+  if (req.body?.submit === true) {
+    // Standardaufgabe automatisch abhaken
+    db.prepare("UPDATE tasks SET done_at = datetime('now') WHERE event_id = ? AND done_at IS NULL AND title = 'Fragebogen ausfüllen'").run(req.event.id);
+    audit(req, 'questionnaire.submitted', 'event', req.event.id);
+  }
   res.json({ ok: true, data: merged, completion: comp, errors, submitted_at: submitted });
 });
 

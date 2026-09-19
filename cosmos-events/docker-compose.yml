@@ -1,0 +1,38 @@
+# Produktion: Caddy terminiert TLS (Let's Encrypt automatisch) und leitet an die App weiter.
+# 1) .env aus .env.example erstellen (APP_ORIGIN, DATA_ENCRYPTION_KEY, ADMIN_EMAIL, Spotify)
+# 2) DOMAIN in dieser Datei bzw. in .env setzen
+# 3) docker compose up -d
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      TRUST_PROXY: "1"
+      DATA_DIR: /app/data
+      PORT: "3000"
+    volumes:
+      - cosmos-data:/app/data
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-dashboard.example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+volumes:
+  cosmos-data:
+  caddy-data:
+  caddy-config:

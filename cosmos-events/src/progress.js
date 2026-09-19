@@ -7,6 +7,13 @@ const { completion } = require('./questionnaire');
 const WEIGHTS = { questionnaire: 35, music: 20, update_call: 15, final_meeting: 20, completed: 10 };
 const FINAL_MEETING_THRESHOLD = 80; // ab hier wird die finale Besprechung empfohlen
 
+function fmtDe(iso) {
+  if (!iso) return '';
+  const [d, t] = String(iso).split('T');
+  const [y, m, day] = d.split('-');
+  return `${day}.${m}.${y}${t ? ' ' + t.slice(0, 5) + ' Uhr' : ''}`;
+}
+
 const PROGRAM_SLOTS = ['Einzug', 'Eröffnungstanz', 'Tortenanschnitt', 'Brautstraußwurf', 'Letzter Song'];
 
 function computeProgress(eventId) {
@@ -61,14 +68,14 @@ function computeProgress(eventId) {
       detail: `${mustplays} Must-Plays · ${wishes} Wünsche · ${music.nogo || 0} No-Gos · ${programme} Programm-Songs` },
     { id: 'update_call', title: 'Update-Gespräch', percent: updateDone ? 100 : updateScheduled ? 40 : 0,
       state: updateDone ? 'done' : updateScheduled ? 'active' : 'open',
-      detail: updateDone ? 'Erledigt' : updateCall && updateCall.scheduled_at ? `Geplant: ${updateCall.scheduled_at}` : 'Noch nicht geplant',
+      detail: updateDone ? 'Erledigt' : updateCall && updateCall.scheduled_at ? `Geplant: ${fmtDe(updateCall.scheduled_at)}` : 'Noch nicht geplant',
       scheduled_at: updateCall ? updateCall.scheduled_at : null },
     { id: 'final_meeting', title: 'Finale Besprechung', percent: finalDone ? 100 : finalScheduled ? 40 : 0,
       state: finalDone ? 'done' : finalScheduled ? 'active' : 'open',
-      detail: finalDone ? 'Erledigt' : finalMeeting && finalMeeting.scheduled_at ? `Geplant: ${finalMeeting.scheduled_at}` : `Empfohlen ab ${FINAL_MEETING_THRESHOLD} % Planungsfortschritt`,
+      detail: finalDone ? 'Erledigt' : finalMeeting && finalMeeting.scheduled_at ? `Geplant: ${fmtDe(finalMeeting.scheduled_at)}` : `Empfohlen ab ${FINAL_MEETING_THRESHOLD} % Planungsfortschritt`,
       scheduled_at: finalMeeting ? finalMeeting.scheduled_at : null },
     { id: 'completed', title: 'Event abgeschlossen', percent: completed ? 100 : 0,
-      state: completed ? 'done' : 'open', detail: completed ? 'Danke für euer Vertrauen!' : ev.event_date ? `Event am ${ev.event_date}` : 'Termin offen' },
+      state: completed ? 'done' : 'open', detail: completed ? 'Danke für euer Vertrauen!' : ev.event_date ? `Event am ${fmtDe(ev.event_date)}` : 'Termin offen' },
   ];
 
   const recommendations = [];
